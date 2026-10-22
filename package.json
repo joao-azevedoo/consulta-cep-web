@@ -1,0 +1,11 @@
+{
+  "name": "consulta-cep-web",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Consulta de endereços por CEP com HTML, CSS e JavaScript puro.",
+  "scripts": {
+    "test": "node --test"
+  },
+  "author": "João Azevedo"
+}

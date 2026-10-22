@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#215ae8">
+    <meta name="description" content="Consulte endereços pelo CEP, salve suas buscas recentes e copie o endereço com um clique.">
+    <title>Consulta CEP | João Azevedo</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script src="./app.js" type="module"></script>
+  </head>
+  <body>
+    <div class="page">
+      <header class="header">
+        <a class="brand" href="./" aria-label="Consulta CEP, início">
+          <span class="brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none"><path d="M19 10c0 5-7 10-7 10S5 15 5 10a7 7 0 1 1 14 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </span>
+          <span>Consulta<span class="brand-accent">CEP</span></span>
+        </a>
+        <span class="header-note">Simples. Rápido. Gratuito.</span>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <p class="eyebrow"><span></span> SEU ENDEREÇO COMEÇA AQUI</p>
+          <h1 id="page-title">Um CEP.<br>O endereço que você precisa.</h1>
+          <p>Encontre rua, bairro, cidade e estado em uma única consulta.</p>
+        </section>
+
+        <div class="workspace">
+          <section class="search-card" aria-labelledby="search-title">
+            <div class="section-heading">
+              <span class="step">01</span>
+              <h2 id="search-title">Consulte um CEP</h2>
+            </div>
+            <p class="section-description">Digite os 8 números para encontrar o endereço.</p>
+            <form id="cep-form" novalidate>
+              <label for="cep">CEP</label>
+              <input id="cep" name="cep" type="text" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" aria-describedby="cep-hint feedback" required>
+              <p id="cep-hint" class="hint">Com ou sem hífen. Exemplo: 01001-000.</p>
+              <button id="search-button" class="button button-primary" type="submit">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg>
+                <span id="search-label">Consultar CEP</span>
+              </button>
+              <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+            </form>
+            <div class="source-note">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4Z"/><path d="m8 12 3 3 5-6"/></svg>
+              <span>Dados públicos do <a href="https://viacep.com.br/" target="_blank" rel="noopener noreferrer">ViaCEP</a></span>
+            </div>
+          </section>
+
+          <section id="result-panel" class="result-card" aria-labelledby="result-title" aria-busy="false">
+            <div class="section-heading">
+              <span class="step">02</span>
+              <h2 id="result-title">Endereço encontrado</h2>
+            </div>
+            <div id="empty-state" class="empty-state">
+              <div class="map-art" aria-hidden="true">
+                <span class="map-road road-one"></span><span class="map-road road-two"></span><span class="map-road road-three"></span>
+                <svg viewBox="0 0 48 48" fill="none"><path d="M37 20c0 10-13 22-13 22S11 30 11 20a13 13 0 1 1 26 0Z"/><circle cx="24" cy="20" r="4.5"/></svg>
+              </div>
+              <h3>Vamos encontrar seu endereço?</h3>
+              <p>Faça uma consulta e os detalhes<br>aparecerão aqui.</p>
+            </div>
+            <div id="address-result" hidden>
+              <div class="result-topline"><span class="success-label"><span></span> Endereço localizado</span><span id="result-cep" class="cep-badge"></span></div>
+              <dl class="address-grid">
+                <div class="address-street"><dt>Rua</dt><dd id="result-street"></dd></div>
+                <div class="address-neighborhood"><dt>Bairro</dt><dd id="result-neighborhood"></dd></div>
+                <div><dt>Cidade</dt><dd id="result-city"></dd></div>
+                <div><dt>Estado</dt><dd id="result-state"></dd></div>
+              </dl>
+              <button id="copy-button" type="button" class="button button-secondary">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="8" y="8" width="12" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+                <span>Copiar endereço</span>
+              </button>
+              <p id="copy-feedback" class="copy-feedback" role="status" aria-live="polite"></p>
+              <div id="manual-copy" hidden>
+                <label for="copy-text">Selecione e copie o endereço:</label>
+                <textarea id="copy-text" readonly rows="3"></textarea>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <section class="history-card" aria-labelledby="history-title">
+          <div class="history-heading">
+            <div><h2 id="history-title">Consultas recentes</h2><p>Seus últimos 5 CEPs ficam salvos neste navegador.</p></div>
+            <button id="clear-history" class="text-button" type="button" hidden>Limpar histórico</button>
+          </div>
+          <p id="history-empty" class="history-empty">Seu histórico aparecerá aqui depois da primeira consulta.</p>
+          <ul id="history-list" class="history-list"></ul>
+          <p id="storage-feedback" class="storage-feedback" role="status"></p>
+        </section>
+        <noscript><p class="noscript">Ative o JavaScript no navegador para consultar um CEP.</p></noscript>
+      </main>
+
+      <footer><span>Consulta CEP · <a href="https://github.com/joao-azevedoo" target="_blank" rel="noopener noreferrer">João Azevedo</a></span><span>Um endereço, menos complicação.</span></footer>
+    </div>
+  </body>
+</html>
