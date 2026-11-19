@@ -20,21 +20,37 @@ test('aceita 8 números com ou sem hífen e preserva o zero inicial', () => {
 
 test('rejeita entradas inválidas antes de acessar a API', async () => {
   let chamadas = 0;
-  for (const valor of ['', '123', '010010000', '01001abc', '01 001000', '01001/000']) {
+  for (const valor of ['', '123', '010010000', '85660-0009', '01001abc', '01 001000', '01001/000']) {
     await assert.rejects(consultarCep(valor, async () => { chamadas++; }), /8 números/);
   }
   assert.equal(chamadas, 0);
 });
 
-test('consulta ViaCEP com fetch e normaliza o endereço recebido', async () => {
-  const endereco = await consultarCep('01001-000', async (url, opcoes) => {
-    assert.equal(url, 'https://viacep.com.br/ws/01001000/json/');
+test('inicia as duas buscas antes de receber a resposta e completa o nome do estado pelo IBGE', async () => {
+  const viaCep = 'https://viacep.com.br/ws/01001000/json/';
+  const ibge = 'https://servicodados.ibge.gov.br/api/v1/localidades/estados';
+  const pendentes = new Map();
+  const consulta = consultarCep('01001-000', (url, opcoes) => {
     assert.ok(opcoes.signal instanceof AbortSignal);
-    return { ok: true, json: async () => dadosApi };
+    return new Promise(resolver => pendentes.set(url, resolver));
   });
+  assert.deepEqual(new Set(pendentes.keys()), new Set([viaCep, ibge]));
+  pendentes.get(ibge)({ ok: true, json: async () => [{ sigla: 'SP', nome: 'São Paulo' }] });
+  pendentes.get(viaCep)({ ok: true, json: async () => ({ ...dadosApi, estado: undefined }) });
+  const endereco = await consulta;
+  assert.equal(endereco.estado, 'São Paulo');
   assert.equal(endereco.rua, 'Praça da Sé');
   assert.equal(endereco.cidade, 'São Paulo');
   assert.equal(textoDoEndereco(endereco), 'Praça da Sé, Sé, São Paulo - SP, CEP 01001-000');
+});
+
+test('preserva o endereço do ViaCEP quando o serviço de estados está indisponível', async () => {
+  const endereco = await consultarCep('01001000', async url => {
+    if (url.startsWith('https://viacep.com.br/')) return { ok: true, json: async () => dadosApi };
+    throw new Error('Catálogo de estados indisponível');
+  });
+  assert.equal(endereco.rua, 'Praça da Sé');
+  assert.equal(endereco.estado, 'São Paulo');
 });
 
 test('informa quando um CEP válido não existe', async () => {

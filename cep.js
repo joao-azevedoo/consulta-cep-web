@@ -14,15 +14,31 @@ export function formatarCep(cep) {
   return `${numeros.slice(0, 5)}-${numeros.slice(5)}`;
 }
 
+async function buscarEstados(buscar) {
+  try {
+    const resposta = await buscar('https://servicodados.ibge.gov.br/api/v1/localidades/estados', {
+      cache: 'force-cache',
+      signal: AbortSignal.timeout(1500),
+    });
+    if (!resposta.ok) return [];
+    const estados = await resposta.json();
+    return Array.isArray(estados) ? estados : [];
+  } catch {
+    // O endereço do ViaCEP continua disponível se o catálogo de estados falhar.
+    return [];
+  }
+}
+
 export async function consultarCep(valor, buscar = globalThis.fetch) {
   const cep = normalizarCep(valor);
   const controle = new AbortController();
   const limite = setTimeout(() => controle.abort(), 10000);
 
   try {
-    const resposta = await buscar(`https://viacep.com.br/ws/${cep}/json/`, {
-      signal: controle.signal,
-    });
+    const [resposta, estados] = await Promise.all([
+      buscar(`https://viacep.com.br/ws/${cep}/json/`, { signal: controle.signal }),
+      buscarEstados(buscar),
+    ]);
     if (!resposta.ok) throw new Error('SERVICO_INDISPONIVEL');
 
     const dados = await resposta.json();
@@ -35,13 +51,15 @@ export async function consultarCep(valor, buscar = globalThis.fetch) {
       throw new Error('RESPOSTA_INVALIDA');
     }
 
+    const nomeViaCep = typeof dados.estado === 'string' ? dados.estado.trim() : '';
+    const estadoIbge = estados.find(item => item?.sigla === dados.uf && typeof item.nome === 'string');
     return {
       cep: formatarCep(cep),
       rua: typeof dados.logradouro === 'string' ? dados.logradouro.trim() : '',
       bairro: typeof dados.bairro === 'string' ? dados.bairro.trim() : '',
       cidade: dados.localidade.trim(),
       uf: dados.uf,
-      estado: typeof dados.estado === 'string' && dados.estado.trim() ? dados.estado.trim() : dados.uf,
+      estado: estadoIbge?.nome.trim() || nomeViaCep || dados.uf,
     };
   } catch (erro) {
     if (erro.message === 'CEP_NAO_ENCONTRADO') {
